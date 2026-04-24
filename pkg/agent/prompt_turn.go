@@ -49,6 +49,9 @@ func promptOverlaysForOptions(opts processOptions) []PromptPart {
 }
 
 func promptContentBlock(part PromptPart, cache *providers.CacheControl) providers.ContentBlock {
+	if cache == nil {
+		cache = cacheControlForPromptPart(part)
+	}
 	return providers.ContentBlock{
 		Type:         "text",
 		Text:         part.Content,
@@ -56,6 +59,15 @@ func promptContentBlock(part PromptPart, cache *providers.CacheControl) provider
 		PromptLayer:  string(part.Layer),
 		PromptSlot:   string(part.Slot),
 		PromptSource: string(part.Source.ID),
+	}
+}
+
+func cacheControlForPromptPart(part PromptPart) *providers.CacheControl {
+	switch part.Cache {
+	case PromptCacheEphemeral:
+		return &providers.CacheControl{Type: "ephemeral"}
+	default:
+		return nil
 	}
 }
 

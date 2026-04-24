@@ -409,6 +409,7 @@ func systemMessageFingerprints(messages []providers.Message) []systemMessageFing
 		if msg.Role != "system" {
 			continue
 		}
+		msg = providerVisibleMessage(msg)
 		fingerprints = append(fingerprints, systemMessageFingerprint{
 			Index:   i,
 			Message: cloneProviderMessages([]providers.Message{msg})[0],
@@ -418,7 +419,32 @@ func systemMessageFingerprints(messages []providers.Message) []systemMessageFing
 }
 
 func llmHookToolDefinitionsUnchanged(before, after []providers.ToolDefinition) bool {
-	return reflect.DeepEqual(cloneToolDefinitions(before), cloneToolDefinitions(after))
+	return reflect.DeepEqual(providerVisibleToolDefinitions(before), providerVisibleToolDefinitions(after))
+}
+
+func providerVisibleMessage(msg providers.Message) providers.Message {
+	msg.PromptLayer = ""
+	msg.PromptSlot = ""
+	msg.PromptSource = ""
+	if len(msg.SystemParts) > 0 {
+		msg.SystemParts = append([]providers.ContentBlock(nil), msg.SystemParts...)
+		for i := range msg.SystemParts {
+			msg.SystemParts[i].PromptLayer = ""
+			msg.SystemParts[i].PromptSlot = ""
+			msg.SystemParts[i].PromptSource = ""
+		}
+	}
+	return msg
+}
+
+func providerVisibleToolDefinitions(defs []providers.ToolDefinition) []providers.ToolDefinition {
+	cloned := cloneToolDefinitions(defs)
+	for i := range cloned {
+		cloned[i].PromptLayer = ""
+		cloned[i].PromptSlot = ""
+		cloned[i].PromptSource = ""
+	}
+	return cloned
 }
 
 func (hm *HookManager) BeforeTool(

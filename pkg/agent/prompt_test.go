@@ -135,8 +135,14 @@ func TestBuildMessagesFromPrompt_AttachesInternalPromptMetadata(t *testing.T) {
 		switch part.PromptSource {
 		case string(PromptSourceRuntime):
 			hasRuntime = true
+			if part.CacheControl != nil {
+				t.Fatalf("runtime cache control = %#v, want nil", part.CacheControl)
+			}
 		case string(PromptSourceSummary):
 			hasSummary = true
+			if part.CacheControl != nil {
+				t.Fatalf("summary cache control = %#v, want nil", part.CacheControl)
+			}
 		}
 	}
 	if !hasRuntime {
@@ -181,6 +187,9 @@ func TestContextBuilder_CollectsToolDiscoveryContributor(t *testing.T) {
 			if part.PromptLayer != string(PromptLayerCapability) || part.PromptSlot != string(PromptSlotTooling) {
 				t.Fatalf("tool discovery metadata = %#v, want capability/tooling", part)
 			}
+			if part.CacheControl == nil || part.CacheControl.Type != "ephemeral" {
+				t.Fatalf("tool discovery cache control = %#v, want ephemeral", part.CacheControl)
+			}
 		}
 	}
 	if !found {
@@ -212,6 +221,9 @@ func TestContextBuilder_CollectsMCPServerContributor(t *testing.T) {
 			found = true
 			if part.PromptLayer != string(PromptLayerCapability) || part.PromptSlot != string(PromptSlotMCP) {
 				t.Fatalf("mcp metadata = %#v, want capability/mcp", part)
+			}
+			if part.CacheControl == nil || part.CacheControl.Type != "ephemeral" {
+				t.Fatalf("mcp cache control = %#v, want ephemeral", part.CacheControl)
 			}
 		}
 	}
